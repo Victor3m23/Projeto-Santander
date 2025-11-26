@@ -1,33 +1,33 @@
 # Projeto-Santander
 Este projeto foi desenvolvido para praticar técnicas de força bruta usando Kali Linux e a ferramenta Medusa em um ambiente controlado. Utilizei o Metasploitable 2 e o DVWA para observar serviços vulneráveis, testar ataques automatizados e registrar comandos, wordlists e aprendizados.
-Projeto Prático – Testes de Força Bruta com Kali Linux e Medusa
+Projeto Prático – Testes de Força Bruta com Kali Linux e Medus
 
-Este repositório documenta minha experiência prática utilizando o Kali Linux e a ferramenta Medusa para realizar testes de força bruta em um ambiente controlado.
-Usei o Metasploitable 2 e o DVWA como alvos, o que me permitiu entender melhor como serviços vulneráveis se comportam quando estão mal configurados.
 
-O foco deste projeto foi aprender, testar, errar, acertar e ver na prática como esses processos funcionam.
+Esse repositório é onde registrei minha experiência usando o Kali Linux junto com o Medusa pra fazer alguns testes de força bruta num ambiente controlado. Usei o Metasploitable 2 e também o DVWA como alvos, o que me ajudou bastante a entender como serviços vulneráveis se comportam quando estão configurados do jeito errado.
+
+A ideia principal aqui foi aprender na prática mesmo: testar, errar, ajustar e ver o que realmente funciona.
 
 Objetivos Principais
-
-Entender ataques de força bruta em diferentes serviços
-Configurar e operar um laboratório controlado
-Utilizar o Medusa de forma eficaz
-Identificar e mitigar vulnerabilidades
-Documentar o processo de forma clara
+entender melhor ataques de força bruta
+configurar um laboratório simples e funcional
+usar o Medusa de forma mais correta
+identificar e tentar mitigar vulnerabilidades
+documentar tudo de um jeito que eu consiga entender depois
 Ambiente Utilizado
-Criei duas máquinas no VirtualBox:
+
+Eu criei duas máquinas no VirtualBox:
 Kali Linux (atacante)
 Metasploitable 2 (alvo)
-Ambas foram configuradas em rede Host-Only, garantindo isolamento e segurança durante os testes.
-Para validar a comunicação, utilizei:
+As duas ficaram na rede Host-Only, assim não mexe com a rede real.
+Pra testar se estavam se enxergando, usei:
 
 ifconfig
-ping <IP-METASPLOITABLE>
-Wordlists Utilizadas
-Foram criadas duas listas simples:
+ping 192.198.56.101
+Wordlists que usei
 
-Arquivo senhas.txt:
+Criei duas wordlists simples.
 
+senhas.txt
 123
 admin
 password
@@ -35,75 +35,77 @@ root
 msfadmin
 
 
-Arquivo usuarios.txt:
+usuarios.txt
 msfadmin
 user
 service
 
 Teste 1 – Ataque FTP com Medusa
-O FTP do Metasploitable é vulnerável por padrão, então serviu como ponto inicial.
+O FTP do Metasploitable já é vulnerável por padrão, então foi o primeiro teste.
 
 Comando:
-medusa -h <IP-METASPLOITABLE> -u msfadmin -P senhas.txt -M ftp
+medusa -h 192.198.56.101-u msfadmin -P senhas.txt -M ftp
 
 
 Resultado:
-A senha foi encontrada rapidamente, mostrando como credenciais fracas comprometem qualquer serviço.
-Teste 2 – Ataque a Formulário Web (DVWA)
+ Deu pra ver como senha fraca é praticamente deixar a porta aberta.
+Teste 2 – Ataque ao Formulário do DVWA
 
-Acesso ao DVWA pelo navegador:
-http://<IP-METASPLOITABLE>/DVWA
+Acessei o DVWA no navegador:
+
+http://192.198,56.101/DVWA
 
 
 Login padrão:
 admin / password
 
 
-Nível de segurança ajustado para Low.
-
-Comando do ataque via Medusa:
-medusa -h <IP-METASPLOITABLE> -u admin -P senhas.txt -M web-form -m FORM:"/DVWA/vulnerabilities/brute/?username=&password=&Login=Login:username=^USER^&password=^PASS^:F=Login failed"
-
-
-Resultado:
-O Medusa conseguiu automatizar o ataque e localizar a senha, demonstrando como bruteforce em formulários funciona.
-
-Teste 3 – Password Spraying em SMB
-
-Primeiro, realizei uma enumeração de usuários:
-
-enum4linux -U <IP-METASPLOITABLE>
-
-
-Depois fiz password spraying, testando uma única senha para todos os usuários.
+Coloquei o nível de segurança em Low pra facilitar os testes.
 
 Comando:
-medusa -h <IP-METASPLOITABLE> -U usuarios.txt -P senha_unica.txt -M smbnt
+
+medusa -h 192.198.56.101 -u admin -P senhas.txt -M web-form -m FORM:"/DVWA/vulnerabilities/brute/?username=&password=&Login=Login:username=^USER^&password=^PASS^:F=Login failed"
 
 
 Resultado:
-Foi possível encontrar ao menos um usuário com senha fraca, evidenciando como apenas um ponto vulnerável já compromete o ambiente.
+O Medusa conseguiu achar a senha e simular o ataque no formulário. Isso ajudou a entender como o processo funciona mesmo num site simples.
+
+Teste 3 – Password Spraying no SMB
+
+Primeiro fiz uma enumeração de usuários:
+
+enum4linux -U 192.198.56.101
+
+
+Depois tentei password spraying, usando só uma senha contra vários usuários.
+
+Comando:
+medusa -h 192.198.56.101 -U usuarios.txt -P senha_unica.txt -M smbnt
+
+
+Resultado:
+Consegui achar pelo menos um usuário com senha fraca. Mostra como um único usuário mal configurado já é suficiente pra quebrar tudo.
 
 Medidas de Mitigação
 
-Algumas lições importantes identificadas:
+Algumas coisas que percebi durante os testes:
 
-Evitar senhas fracas ou padrão
+nada de senha fraca
 
-Habilitar bloqueio após múltiplas tentativas
+bloquear tentativas depois de um certo número
 
-Implementar MFA sempre que possível
+usar MFA quando der
 
-Utilizar ferramentas como Fail2ban
+usar ferramentas tipo Fail2ban
 
-Monitorar logs e alertas de autenticação
+monitorar logs e acessos suspeitos
 
-Desativar serviços desnecessários (como FTP)
+desativar serviços que não precisa (FTP por exemplo)
 
-Preferir senhas complexas ou autenticação por chave
+usar senha forte ou chave quando possível
 
 O Que Aprendi
 
-Este projeto ajudou a entender como um atacante pensa e como defender melhor um ambiente. Trabalhar com ferramentas como Medusa, Enum4Linux e DVWA tornou o processo mais claro e didático.
-Também reforçou a importância de boas práticas de configuração e testes contínuos.
-
+Esse projeto foi muito útil pra entender como um atacante realmente pensa e age.
+Ferramentas como Medusa, Enum4linux e DVWA deixam o processo mais visual e fácil de entender.
+Também ficou claro como boas práticas de configuração fazem diferença gigante.
